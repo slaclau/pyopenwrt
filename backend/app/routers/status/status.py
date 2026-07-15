@@ -87,7 +87,7 @@ def get_status(session: SessionDep) -> Status:
         device_status.append(status)
     rtn["device_status"] = device_status
     network_status = []
-    leases = session.query(DHCPLease).all()
+    leases = session.query(DHCPLease).where(DHCPLease.expires >= time.time()).all()
     for network in get_all_networks(session):
         network_status.append(
             {

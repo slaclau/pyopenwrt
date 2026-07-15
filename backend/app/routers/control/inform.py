@@ -164,11 +164,13 @@ def inform(
             )
     if payload.radios and not device.adopted and not DeviceRole.AP in device.roles:
         device.roles = device.roles + [DeviceRole.AP]
+    time_now = time.time()
     for lease in payload.dhcp_leases:
         lease_record = DHCPLease()
         lease_record.device_id = device.device_id
         for k, v in lease.model_dump().items():
             lease_record.__setattr__(k, v)
+        lease_record.expires += time_now
         session.merge(lease_record)
     if payload.model:
         device.model = payload.model

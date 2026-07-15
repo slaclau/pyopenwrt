@@ -1,7 +1,7 @@
 import os
 import pprint
 import time
-from ipaddress import IPv4Address
+from ipaddress import IPv4Address, IPv6Address
 
 import gzip
 import json
@@ -84,7 +84,7 @@ async def netify(request: Request, session: SessionDep):
             complete_netify_flow(payload["flow"], session, True)
         case "flow_stats":
             add_flow_stats(payload, session)
-        case ("agent_status" | "interface_stats" | "interfaces" | "global_stats"):
+        case "agent_status" | "interface_stats" | "interfaces" | "global_stats":
             pass
         case _:
             print(payload["type"])
@@ -210,22 +210,52 @@ def get_last_hour_stats(session: SessionDep) -> TimeStats:
     return TimeStats(flows=flows, stats=stats)
 
 
+class Stat(BaseModel):
+    download: int
+    upload: int
+
+
+class SummaryHostStat(Stat):
+    mac: MacAddress
+    ip: IPv4Address | IPv6Address
+
+
+class SummaryCategoryStat(Stat):
+    application: str
+    protocol: str
+
+
+class RawHostStat(SummaryHostStat, SummaryCategoryStat):
+    application: str
+    protocol: str
+    mac: MacAddress
+    ip: IPv4Address | IPv6Address
+
+
+class HostTimeStats(BaseModel):
+    raw: list[RawHostStat]
+    hosts: list[SummaryHostStat]
+    categories: list[SummaryCategoryStat]
+
+
 @router.get("/stats/by_host/last_day")
-def get_host_last_hour_stats(session: SessionDep):
+def get_host_last_hour_stats(session: SessionDep) -> HostTimeStats:
     return get_host_time_stats(session, time.time() - 3600 * 24, time.time())
 
 
 @router.get("/stats/by_host/last_week")
-def get_host_last_hour_stats(session: SessionDep):
+def get_host_last_hour_stats(session: SessionDep) -> HostTimeStats:
     return get_host_time_stats(session, time.time() - 3600 * 24 * 7, time.time())
 
 
 @router.get("/stats/by_host/last_month")
-def get_host_last_hour_stats(session: SessionDep):
+def get_host_last_hour_stats(session: SessionDep) -> HostTimeStats:
     return get_host_time_stats(session, time.time() - 60 * 24 * 30, time.time())
 
 
-def get_host_time_stats(session: SessionDep, start_time, end_time, transform=True):
+def get_host_time_stats(
+    session: SessionDep, start_time, end_time, transform=True
+) -> HostTimeStats:
     t = time.time()
     identifiers = (
         session.query(

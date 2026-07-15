@@ -17,7 +17,7 @@ from .routers.status import status
 from .routers import netify
 
 app = FastAPI()
-app.frontend("/", directory="dist", fallback="index.html")
+app.frontend("/", directory="dist", fallback="index.html", check_dir=False)
 app.include_router(devices.router)
 app.include_router(provisioning.router)
 app.include_router(networks.router)
