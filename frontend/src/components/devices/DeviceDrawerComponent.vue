@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import type { Ref } from 'vue'
 import type { DeviceStatusWithDevice } from '../../sdk/types.gen'
 import DeviceOverview from './overview/DeviceOverview.vue'
 import DeviceSettings from './settings/DeviceSettings.vue'
 import DeviceCommands from './overview/DeviceCommands.vue'
 
-const props = defineProps<{
+defineProps<{
   device: DeviceStatusWithDevice | undefined
 }>()
 </script>

@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, type Ref } from 'vue'
+import { onMounted, ref, type Ref } from 'vue'
 
 import DeviceComponent from '@/components/devices/DeviceDrawerComponent.vue'
 import type { DeviceStatusWithDevice } from '@/sdk'
 import DeviceIcon from '@/components/devices/DeviceIcon.vue'
 import { formatTime } from '@/utils'
 
-let selectedDevice: Ref<DeviceStatusWithDevice | undefined> = ref(undefined)
-let openDrawer = ref(false)
+const selectedDevice: Ref<DeviceStatusWithDevice | undefined> = ref(undefined)
+const openDrawer = ref(false)
 let drawerWidth: Ref<string>
 
-const props = defineProps<{
+defineProps<{
   devices: Array<DeviceStatusWithDevice> | undefined
 }>()
 
@@ -18,7 +18,7 @@ onMounted(() => {
   drawerWidth = ref(window.screen.width < 500 ? '100%' : '30%')
 })
 
-function selectDevice(row: any, column: any, event: any) {
+function selectDevice(row: DeviceStatusWithDevice) {
   selectedDevice.value = row
   openDrawer.value = true
 }

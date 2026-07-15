@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { createWirelessNetworkConfigurationWirelessPost, getWirelessNetworkConfigurationWirelessWirelessIdGet, provisionAllControlProvisionPost, updateWirelessNetworkConfigurationWirelessWirelessIdPut, type Wireless } from '@/sdk'
+import {
+  createWirelessNetworkConfigurationWirelessPost,
+  getWirelessNetworkConfigurationWirelessWirelessIdGet,
+  provisionAllControlProvisionPost,
+  updateWirelessNetworkConfigurationWirelessWirelessIdPut,
+  type Wireless,
+} from '@/sdk'
 import { client } from '../../../client'
 import { ref, type Ref } from 'vue'
 
@@ -7,7 +13,7 @@ const props = defineProps<{
   network: Wireless | null
 }>()
 
-let config: Ref<Wireless | null> = ref(props.network)
+const config: Ref<Wireless | null> = ref(props.network)
 
 function onSubmit(): void {
   if (!config.value) return
@@ -17,8 +23,8 @@ function onSubmit(): void {
     createWirelessNetworkConfigurationWirelessPost({
       client,
       body: config.value,
-    }).then((res) => {
-      provisionAllControlProvisionPost({ client }).then((res) => {
+    }).then(() => {
+      provisionAllControlProvisionPost({ client }).then(() => {
         console.log('provisioning all devices')
       })
     })
@@ -29,9 +35,9 @@ function onSubmit(): void {
         wireless_id: config.value.wireless_id,
       },
       body: config.value,
-    }).then((res) => {
+    }).then(() => {
       console.log(`updated network ${config.value?.network_id}`)
-      provisionAllControlProvisionPost({ client }).then((res) => {
+      provisionAllControlProvisionPost({ client }).then(() => {
         console.log('provisioning all devices')
       })
     })

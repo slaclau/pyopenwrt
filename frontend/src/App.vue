@@ -19,7 +19,7 @@ import {
 import { useDark, useToggle } from '@vueuse/core'
 import { onMounted, onUnmounted, ref, type Ref } from 'vue'
 
-let status: Ref<Status> = ref({})
+const status: Ref<Status> = ref({})
 let timer: number
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
@@ -47,8 +47,9 @@ onUnmounted(() => {
       <h1>
         OpenWrt Controller
         <span style="float: right"
-          ><el-button @click="toggleDark()"><svg-icon type="mdi" :path="mdiThemeLightDark" :size="24"/></el-button></span
-        >
+          ><el-button @click="toggleDark()"
+            ><svg-icon type="mdi" :path="mdiThemeLightDark" :size="24" /></el-button
+        ></span>
       </h1>
     </el-header>
     <el-main>
@@ -77,8 +78,7 @@ onUnmounted(() => {
           <DPIView />
         </el-tab-pane>
         <el-tab-pane name="settings">
-          <template #label>
-            <svg-icon type="mdi" :path="mdiCog" :size="24" /> </template
+          <template #label> <svg-icon type="mdi" :path="mdiCog" :size="24" /> </template
           ><SettingsView :status="status"
         /></el-tab-pane>
       </el-tabs>

@@ -3,7 +3,7 @@ import { makeIcon } from '@/utils'
 import SvgIcon from '@jamescoyle/vue-icon'
 import { type Device } from '@/sdk'
 
-const props = defineProps<{
+defineProps<{
   device: Device | undefined
 }>()
 </script>

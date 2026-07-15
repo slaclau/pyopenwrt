@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import type { DeviceStatusWithDevice } from '@/sdk'
-import { makeIcon } from '../../../utils'
 import DeviceIcon from '../DeviceIcon.vue'
-import type { Ref } from 'vue'
-const props = defineProps<{
+defineProps<{
   device: DeviceStatusWithDevice | undefined
 }>()
 </script>

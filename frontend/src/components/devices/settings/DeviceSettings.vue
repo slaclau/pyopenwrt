@@ -21,13 +21,13 @@ function onSubmit(): void {
         device_id: props.device.device.device_id,
       },
       body: props.device.device,
-    }).then((res) => {
+    }).then(() => {
       if (props.device === undefined) return
       console.log(`updated device ${props.device.device?.device_id}`)
       provisionControlProvisionDeviceIdPost({
         client,
         path: { device_id: props.device.device.device_id },
-      }).then((res) => {
+      }).then(() => {
         console.log('provisioning device')
       })
     })
@@ -63,10 +63,7 @@ function onCancel(): void {
         </el-radio-group>
       </el-form-item>
       <el-form-item>
-        <el-input
-          v-model="device.device.address"
-          :disabled="device.device.address_proto === 'dhcp' ? true : false"
-        />
+        <el-input v-model="device.device.address" :disabled="device.device.address_proto === 'dhcp' ? true : false" />
       </el-form-item>
     </el-card>
   </el-form>

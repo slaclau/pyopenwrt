@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { getAllNetworksConfigurationNetworksGet, type NetworkOutput, type Status } from '@/sdk'
+import { getAllNetworksConfigurationNetworksGet, type NetworkOutput, type NetworkStatus, type Status } from '@/sdk'
 import { client } from '../client'
 import { ref, type Ref } from 'vue'
 
 import NetworkDrawerComponent from '@/components/settings/networks/NetworkDrawerComponent.vue'
 
-let networks: Ref<Array<NetworkOutput> | undefined> = ref([])
+const networks: Ref<Array<NetworkOutput> | undefined> = ref([])
 getAllNetworksConfigurationNetworksGet({ client }).then((res) => {
   networks.value = res.data
   console.log(networks)
 })
 
-let selectedNetwork: Ref<NetworkOutput | null> = ref(null)
-let openDrawer = ref(false)
-let drawerWidth = ref(window.screen.width < 500 ? '100%' : '30%')
+const selectedNetwork: Ref<NetworkOutput | null> = ref(null)
+const openDrawer = ref(false)
+const drawerWidth = ref(window.screen.width < 500 ? '100%' : '30%')
 
-function selectNetwork(row: any, column: any, event: any) {
+function selectNetwork(row: NetworkStatus) {
   selectedNetwork.value = row.network
   openDrawer.value = true
 }
@@ -23,12 +23,12 @@ function addNetwork() {
   selectedNetwork.value = null
   openDrawer.value = true
 }
-function getIPLeases(network_id: String, dhcp_server_id: String) {
-  return props.status?.network_status?.filter(
-    (network) => network.network.dhcp_server_id == dhcp_server_id,
-  )[0].dhcp_leases
-}
-const props = defineProps<{
+// function getIPLeases(network_id: string, dhcp_server_id: string) {
+//   return props.status?.network_status?.filter(
+//     (network) => network.network.dhcp_server_id == dhcp_server_id,
+//   )[0].dhcp_leases
+// }
+defineProps<{
   status: Status | null
 }>()
 </script>

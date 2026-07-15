@@ -14,7 +14,7 @@ const props = defineProps<{
   network: NetworkOutput | null
 }>()
 
-let config: Ref<NetworkInput | null> = ref(props.network)
+const config: Ref<NetworkInput | null> = ref(props.network)
 
 function onSubmit(): void {
   if (!config.value) return
@@ -25,8 +25,8 @@ function onSubmit(): void {
     createNetworkConfigurationNetworksPost({
       client,
       body: config.value,
-    }).then((res) => {
-      provisionAllControlProvisionPost({ client }).then((res) => {
+    }).then(() => {
+      provisionAllControlProvisionPost({ client }).then(() => {
         console.log('provisioning all devices')
       })
     })
@@ -37,9 +37,9 @@ function onSubmit(): void {
         network_id: config.value.network_id,
       },
       body: config.value,
-    }).then((res) => {
+    }).then(() => {
       console.log(`updated network ${config.value?.network_id}`)
-      provisionAllControlProvisionPost({ client }).then((res) => {
+      provisionAllControlProvisionPost({ client }).then(() => {
         console.log('provisioning all devices')
       })
     })

@@ -5,17 +5,17 @@ import { ref, type Ref } from 'vue'
 
 import WirelessDrawerComponent from '@/components/settings/wireless/WirelessDrawerComponent.vue'
 
-let networks: Ref<Array<Wireless> | undefined> = ref([])
+const networks: Ref<Array<Wireless> | undefined> = ref([])
 getAllWirelessNetworksConfigurationWirelessGet({ client }).then((res) => {
   networks.value = res.data
   console.log(networks)
 })
 
-let selectedNetwork: Ref<Wireless | null> = ref(null)
-let openDrawer = ref(false)
-let drawerWidth = ref(window.screen.width < 500 ? '100%' : '30%')
+const selectedNetwork: Ref<Wireless | null> = ref(null)
+const openDrawer = ref(false)
+const drawerWidth = ref(window.screen.width < 500 ? '100%' : '30%')
 
-function selectNetwork(row: any, column: any, event: any) {
+function selectNetwork(row: Wireless) {
   selectedNetwork.value = row
   openDrawer.value = true
 }
@@ -23,7 +23,7 @@ function addNetwork() {
   selectedNetwork.value = null
   openDrawer.value = true
 }
-const props = defineProps<{
+defineProps<{
   status: Status | null
 }>()
 </script>

@@ -5,7 +5,6 @@ import {
   type DeviceStatusWithDevice,
 } from '@/sdk'
 import { client } from '@/client'
-import type { Ref } from 'vue'
 const props = defineProps<{
   device: DeviceStatusWithDevice | undefined
 }>()
