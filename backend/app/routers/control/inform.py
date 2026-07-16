@@ -135,7 +135,6 @@ def provision(device_id: uuid.UUID, session: SessionDep):
 def inform(
     payload: InformPayload, request: Request, session: SessionDep
 ) -> InformResponse:
-    rtn: InformResponse = InformResponse()
     if payload.device_id is None:
         device_id = uuid.uuid4()
     else:
@@ -181,7 +180,7 @@ def inform(
         device.model = payload.model
 
     if command := session.get(Command, device.device_id):
-        rtn = InformResponse(device_id=command.device_id, command=command.command)
+        rtn = InformResponse(device_id=device_id, command=command.command)
         session.delete(command)
     else:
         rtn = InformResponse(device_id=device_id, command=DeviceCommand.NOOP)
