@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi import FastAPI
 
+
 from .site_manager import send_site_manager_heartbeat
+from .stun import setup_stun_server
 
 from .dependencies import create_db_and_tables
 from .logging import register_log_filter
@@ -38,3 +40,4 @@ import asyncio
 def on_startup():
     create_db_and_tables()
     asyncio.create_task(send_site_manager_heartbeat())
+    asyncio.create_task(setup_stun_server())
