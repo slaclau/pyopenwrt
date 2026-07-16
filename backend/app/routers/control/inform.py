@@ -7,18 +7,17 @@ from enum import Enum
 from ipaddress import IPv4Address
 from typing import Optional
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request, status as status_codes
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from pydantic_extra_types.mac_address import MacAddress
 from sqlmodel import SQLModel, Field, Relationship
 
-from ..configuration.networks import IPv4AddressType
 from ..configuration.ports import PortRole, Port
 from ..configuration.radios import Radio
 from ...dependencies import SessionDep
 from ..configuration.devices import Device, AddressProto, DeviceRole
-from ..status.status import Status, DHCPLeaseBase, DHCPLease, DeviceStatus
+from ..status.status import DHCPLeaseBase, DHCPLease, DeviceStatus
 
 router = APIRouter(prefix="/control", tags=["control"])
 
@@ -73,7 +72,10 @@ def reboot(device_id: uuid.UUID, session: SessionDep):
     command = Command(device_id=device_id, command=DeviceCommand.REBOOT)
     session.add(command)
     status = session.get(DeviceStatus, device_id)
-    status.last_inform = None
+    if status:
+        status.last_inform = None
+    else:
+        raise HTTPException(status_code=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
     session.commit()
 
 
@@ -96,7 +98,10 @@ def adopt(device_id: uuid.UUID, session: SessionDep):
     command = Command(device_id=device_id, command=DeviceCommand.ADOPT)
     session.add(command)
     device = session.get(Device, device_id)
-    device.adopted = True
+    if device:
+        device.adopted = True
+    else:
+        raise HTTPException(status_code=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
     session.commit()
 
 
@@ -130,16 +135,16 @@ def provision(device_id: uuid.UUID, session: SessionDep):
 def inform(
     payload: InformPayload, request: Request, session: SessionDep
 ) -> InformResponse:
-    rtn = {}
+    rtn: InformResponse = InformResponse()
     if payload.device_id is None:
-        rtn["device_id"] = uuid.uuid4()
+        device_id = uuid.uuid4()
     else:
-        rtn["device_id"] = payload.device_id
+        device_id = payload.device_id
 
-    device = session.get(Device, rtn["device_id"])
+    device = session.get(Device, device_id)
     if device is None:
         device = Device(
-            device_id=rtn["device_id"],
+            device_id=device_id,
             hostname="OpenWrt",
             roles=[],
             address_proto=AddressProto.DHCP,
@@ -170,17 +175,16 @@ def inform(
         lease_record.device_id = device.device_id
         for k, v in lease.model_dump().items():
             lease_record.__setattr__(k, v)
-        lease_record.expires += time_now
+        lease_record.expires += int(time_now)
         session.merge(lease_record)
     if payload.model:
         device.model = payload.model
 
     if command := session.get(Command, device.device_id):
-        rtn["command"] = command.command
+        rtn = InformResponse(device_id=command.device_id, command=command.command)
         session.delete(command)
     else:
-        rtn["command"] = DeviceCommand.NOOP
-    rtn = InformResponse(**rtn)
+        rtn = InformResponse(device_id=device_id, command=DeviceCommand.NOOP)
 
     status = DeviceStatus(
         device_id=device.device_id,
