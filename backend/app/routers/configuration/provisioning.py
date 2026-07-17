@@ -3,6 +3,9 @@ import uuid
 from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse, Response
 from netjsonconfig import OpenWrt
+from sqlalchemy import select
+
+from backend.app.routers.configuration.radios import Radio
 
 from .internet import Internet
 from ...dependencies import SessionDep
@@ -53,7 +56,11 @@ def make_network_config(device: Device, session: SessionDep):
     if DeviceRole.AP in device.roles:
         for i, network in enumerate(networks):
             bridge["vlan_filtering"][i]["ports"].append(
-                {"ifname": f"bat0.{network.vlan_id}", "tagging": "u", "primary_vid": False}
+                {
+                    "ifname": f"bat0.{network.vlan_id}",
+                    "tagging": "u",
+                    "primary_vid": False,
+                }
             )
             bridge["bridge_members"].append(f"bat0.{network.vlan_id}")
 
@@ -112,28 +119,40 @@ def make_network_config(device: Device, session: SessionDep):
                 "bridge_loop_avoidance": 1,
             }
         )
-        config.append(
-            {
-                "name": "mesh-vwire",
-                "network": "mesh",
-                "type": "virtual",
-                "proto": "batadv_hardif",
-                "master": "bat0",
-                "mtu": 1536,
-            }
-        )
+        radios = [
+            radio[0]
+            for radio in session.exec(
+                select(Radio.radio_id).where(Radio.device_id == device.device_id)
+            )
+        ]
+        for radio in radios:
+            config.append(
+                {
+                    "name": f"vwire-{radio}",
+                    "network": f"mesh-{radio}",
+                    "type": "virtual",
+                    "proto": "batadv_hardif",
+                    "master": "bat0",
+                    "mtu": 1536,
+                }
+            )
 
     return config
 
 
-def make_wireless_config(device, session: SessionDep):
-    wireless_networks = session.query(Wireless).all()
+def make_wireless_config(device: Device, session: SessionDep):
+    wireless_networks = [wireless[0] for wireless in session.exec(select(Wireless))]
+    radios = [
+        radio[0]
+        for radio in session.exec(
+            select(Radio.radio_id).where(Radio.device_id == device.device_id)
+        )
+    ]
     config = []
-    radios = ["radio0"]
     for radio in radios:
         for wireless in wireless_networks:
             wireless_config = {
-                "name": wireless.wireless_id,
+                "name": f"{wireless.wireless_id}-{radio}",
                 "type": "wireless",
                 "wireless": {
                     "radio": radio,
@@ -150,12 +169,12 @@ def make_wireless_config(device, session: SessionDep):
             config.append(wireless_config)
         config.append(
             {
-                "name": "mesh-vwire",
+                "name": f"vwire-{radio}",
                 "type": "wireless",
                 "wireless": {
                     "radio": radio,
                     "mode": "802.11s",
-                    "mesh_id": "mesh-vwire",
+                    "mesh_id": f"vwire-{radio}",
                     "network": ["mesh"],
                 },
             }
@@ -163,20 +182,25 @@ def make_wireless_config(device, session: SessionDep):
     return config
 
 
-def make_radio_config(device, session: SessionDep):
-    radios = ["radio0"]
+def make_radio_config(device: Device, session: SessionDep):
+    radios: list[str] = [
+        radio[0]
+        for radio in session.exec(
+            select(Radio.radio_id).where(Radio.device_id == device.device_id)
+        )
+    ]
     config = []
     for radio in radios:
         config.append(
             {
                 "name": radio,
                 "type": "mac80211",
-                "phy": "phy0",
+                "phy": radio.replace("radio", "phy"),
                 "protocol": "802.11n",
                 "band": "2g",
                 "channel": 0,
                 "channel_width": 20,
-                "country" : "GB",
+                "country": "GB",
             }
         )
 
