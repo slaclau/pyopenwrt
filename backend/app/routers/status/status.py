@@ -1,6 +1,6 @@
 import datetime
 import time
-import typing
+from typing import Optional
 import uuid
 from ipaddress import IPv4Address
 
@@ -24,10 +24,10 @@ router = APIRouter(prefix="/status", tags=["status"])
 class DeviceStatusBase(SQLModel):
     device_id: uuid.UUID = Field(primary_key=True, foreign_key="device.device_id")
     last_inform: float | None = Field(default=None)
-    last_ip: IPv4Address | None = Field(default=None)
+    last_ip: Optional[IPv4Address] | None = Field(default=None)
     boot_time: datetime.datetime | None = Field(default=None)
-    nat_ip: IPv4Address | None = Field(default=None)
-    nat_port: int | None = Field(default=None)
+    nat_ip: Optional[IPv4Address] | None = Field(default=None)
+    nat_port: Optional[int] = Field(default=None)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
