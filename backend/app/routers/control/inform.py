@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException, Request, status as status_codes
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from pydantic_extra_types.mac_address import MacAddress
-from sqlmodel import Field, Relationship
+from sqlmodel import Field, Relationship, select
 
 from .command import Command, DeviceCommand
 from ...stun import send_immediate_command
@@ -63,8 +63,8 @@ def send_command(device_id: uuid.UUID, command: DeviceCommand, session: SessionD
     try:
         send_immediate_command(device_id=device_id, command=command, session=session)
     except RuntimeError:
-        command = Command(device_id=device_id, command=command)
-        session.add(command)
+        command_item = Command(device_id=device_id, command=command)
+        session.add(command_item)
         session.commit()
 
 
@@ -75,29 +75,28 @@ def reboot(device_id: uuid.UUID, session: SessionDep):
 
 @router.post("/locate/{device_id}")
 def locate(device_id: uuid.UUID, session: SessionDep):
-    send_command(device_id, DeviceCommand.LOCATE)
+    send_command(device_id, DeviceCommand.LOCATE, session)
 
 
 @router.post("/stop-locate/{device_id}")
 def stop_locate(device_id: uuid.UUID, session: SessionDep):
-    send_command(device_id, DeviceCommand.STOP_LOCATE)
+    send_command(device_id, DeviceCommand.STOP_LOCATE, session)
 
 
 @router.post("/adopt/{device_id}")
 def adopt(device_id: uuid.UUID, session: SessionDep):
-    command = Command(device_id=device_id, command=DeviceCommand.ADOPT)
-    session.add(command)
     device = session.get(Device, device_id)
     if device:
         device.adopted = True
     else:
         raise HTTPException(status_code=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
     session.commit()
+    send_command(device_id, DeviceCommand.ADOPT, session)
 
 
 @router.post("/provision")
 def provision_all(session: SessionDep):
-    devices = session.query(Device).all()
+    devices = session.exec(select(Device))
     for device in devices:
         if device.adopted:
             provision(device.device_id, session)
@@ -116,9 +115,7 @@ def update_inform(session: SessionDep):
 
 @router.post("/provision/{device_id}")
 def provision(device_id: uuid.UUID, session: SessionDep):
-    command = Command(device_id=device_id, command=DeviceCommand.PROVISION)
-    session.add(command)
-    session.commit()
+    send_command(device_id, DeviceCommand.PROVISION, session)
 
 
 @router.post("/inform")

@@ -116,8 +116,6 @@ class StunMessage:
         return f"{self.message_type!r}: {self.attributes}"
 
 
-
-
 class ControllerUDPProtocol(asyncio.DatagramProtocol):
     def connection_made(self, transport) -> None:
         self.transport = transport
@@ -143,7 +141,9 @@ class ControllerUDPProtocol(asyncio.DatagramProtocol):
             case _:
                 logger.warning(f"Unexpected stun message type {msg_type!r} from {addr}")
 
+
 UDP_SOCKET = None
+
 
 async def setup_stun_server() -> ControllerUDPProtocol:
     loop = asyncio.get_running_loop()
@@ -161,5 +161,7 @@ def send_immediate_command(device_id: uuid.UUID, command: DeviceCommand, session
     if not status:
         raise RuntimeError
     addr = (str(status.nat_ip), status.nat_port)
-    UDP_SOCKET.sendto(data=bytes(command.value, "utf-8"), addr=addr)
-    print(f"sent {bytes(command.value, "utf-8")} to {addr}")
+    if UDP_SOCKET:
+        UDP_SOCKET.sendto(data=bytes(command.value, "utf-8"), addr=addr)
+    else:
+        raise RuntimeError
