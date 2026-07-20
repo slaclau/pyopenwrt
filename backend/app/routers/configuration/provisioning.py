@@ -5,12 +5,12 @@ from fastapi.responses import PlainTextResponse, Response
 from netjsonconfig import OpenWrt
 from sqlalchemy import select
 
-from backend.app.routers.configuration.radios import Radio
 
 from .internet import Internet
 from ...dependencies import SessionDep
 from .devices import Device, DeviceRole, AddressProto
 from .networks import Network
+from .radios import Radio
 from .wireless import Wireless
 
 router = APIRouter(prefix="/configuration", tags=["provisioning"])

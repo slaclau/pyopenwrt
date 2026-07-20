@@ -26,24 +26,30 @@ class DeviceStatusBase(SQLModel):
     last_inform: float | None = Field(default=None)
     last_ip: IPv4Address | None = Field(default=None)
     boot_time: datetime.datetime | None = Field(default=None)
+    nat_ip: IPv4Address | None = Field(default=None)
+    nat_port: int | None = Field(default=None)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
+    @property
     def time_since_inform(self) -> float | None:
         if not self.last_inform:
-            return
+            return None
         return time.time() - self.last_inform
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
+    @property
     def up(self) -> bool:
         t = self.time_since_inform
         if t is None:
             return False
         return t < 30
 
-    @computed_field
-    def uptime(self) -> float:
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def uptime(self) -> float | None:
         if self.up and self.boot_time is not None:
             return time.time() - self.boot_time.timestamp()
+        return None
 
 
 class DeviceStatus(DeviceStatusBase, table=True):

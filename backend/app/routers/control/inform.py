@@ -3,7 +3,6 @@ import pathlib
 import time
 import typing
 import uuid
-from enum import Enum
 from ipaddress import IPv4Address
 from typing import Optional
 
@@ -11,7 +10,10 @@ from fastapi import APIRouter, HTTPException, Request, status as status_codes
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from pydantic_extra_types.mac_address import MacAddress
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import Field, Relationship
+
+from .command import Command, DeviceCommand
+from ...stun import send_immediate_command
 
 from ..configuration.ports import PortRole, Port
 from ..configuration.radios import Radio
@@ -35,6 +37,11 @@ class Iwinfo(BaseModel):
     assoclist: list[AssoclistItem]
 
 
+class NatInfo(BaseModel):
+    nat_ip: IPv4Address | None = Field()
+    nat_port: int | None = Field()
+
+
 class InformPayload(BaseModel):
     device_id: Optional[uuid.UUID] = None
     ip: IPv4Address
@@ -45,52 +52,35 @@ class InformPayload(BaseModel):
     ports: dict[str, str] = Field()
     dhcp_leases: list[DHCPLeaseBase] = Field()
     radios: dict[str, dict] = Field()
-
-
-class DeviceCommand(Enum):
-    NOOP = "noop"
-    ADOPT = "adopt"
-    PROVISION = "provision"
-    REBOOT = "reboot"
-    FORGET = "forget"
-    UPDATE_INFORM = "update-inform"
-    LOCATE = "locate"
-    STOP_LOCATE = "stop-locate"
-
-
-class Command(SQLModel, table=True):
-    device_id: uuid.UUID = Field(primary_key=True)
-    command: DeviceCommand = Field()
+    nat: NatInfo = Field()
 
 
 class InformResponse(Command):
     pass
 
 
+def send_command(device_id: uuid.UUID, command: DeviceCommand, session: SessionDep):
+    try:
+        send_immediate_command(device_id=device_id, command=command, session=session)
+    except RuntimeError:
+        command = Command(device_id=device_id, command=command)
+        session.add(command)
+        session.commit()
+
+
 @router.post("/reboot/{device_id}")
 def reboot(device_id: uuid.UUID, session: SessionDep):
-    command = Command(device_id=device_id, command=DeviceCommand.REBOOT)
-    session.add(command)
-    status = session.get(DeviceStatus, device_id)
-    if status:
-        status.last_inform = None
-    else:
-        raise HTTPException(status_code=status_codes.HTTP_500_INTERNAL_SERVER_ERROR)
-    session.commit()
+    send_command(device_id, DeviceCommand.REBOOT, session)
 
 
 @router.post("/locate/{device_id}")
 def locate(device_id: uuid.UUID, session: SessionDep):
-    command = Command(device_id=device_id, command=DeviceCommand.LOCATE)
-    session.add(command)
-    session.commit()
+    send_command(device_id, DeviceCommand.LOCATE)
 
 
 @router.post("/stop-locate/{device_id}")
 def stop_locate(device_id: uuid.UUID, session: SessionDep):
-    command = Command(device_id=device_id, command=DeviceCommand.STOP_LOCATE)
-    session.add(command)
-    session.commit()
+    send_command(device_id, DeviceCommand.STOP_LOCATE)
 
 
 @router.post("/adopt/{device_id}")
@@ -190,6 +180,8 @@ def inform(
         last_inform=time.time(),
         last_ip=str(payload.ip),
         boot_time=payload.boot_time,
+        nat_ip=str(payload.nat.nat_ip),
+        nat_port=payload.nat.nat_port,
     )
     if rtn.command == DeviceCommand.REBOOT:
         status.last_inform = None

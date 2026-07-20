@@ -1,0 +1,1 @@
+../../../../device_files/usr/libexec/controller/informd.uc
