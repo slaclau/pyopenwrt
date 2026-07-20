@@ -7,7 +7,7 @@ from ipaddress import IPv4Address
 from fastapi import APIRouter
 from pydantic import BaseModel, computed_field
 from pydantic_extra_types.mac_address import MacAddress
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, select
 
 from ..configuration.networks import (
     get_all_networks,
@@ -84,24 +84,23 @@ class DHCPLease(DHCPLeaseBase, table=True):
 
 @router.get("")
 def get_status(session: SessionDep) -> Status:
-    rtn = {}
-    device_status = []
+    device_status: list[DeviceStatusWithDevice] = []
     for device in get_all_devices(session):
-        status = session.get(DeviceStatus, device.device_id)
+        status: DeviceStatusWithDevice = session.get(DeviceStatus, device.device_id)
         if not status:
             status = DeviceStatusWithDevice(device_id=device.device_id, device=device)
         device_status.append(status)
-    rtn["device_status"] = device_status
     network_status = []
-    leases = session.query(DHCPLease).where(DHCPLease.expires >= time.time()).all()
+    leases = session.exec(
+        select(DHCPLease).where(DHCPLease.expires >= time.time())
+    ).all()
     for network in get_all_networks(session):
         network_status.append(
-            {
-                "network": network,
-                "dhcp_leases": [
+            NetworkStatus(
+                network=network,
+                dhcp_leases=[
                     lease for lease in leases if lease.ipaddr in network.network.hosts()
                 ],
-            }
+            )
         )
-    rtn["network_status"] = network_status
-    return rtn
+    return Status(device_status=device_status, network_status=network_status)
