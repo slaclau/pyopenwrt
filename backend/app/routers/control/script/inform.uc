@@ -1,1 +1,0 @@
-../../../../device_files/usr/libexec/controller/inform.uc

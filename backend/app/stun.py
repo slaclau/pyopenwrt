@@ -161,6 +161,8 @@ def send_immediate_command(device_id: uuid.UUID, command: DeviceCommand, session
     if not status:
         raise RuntimeError
     addr = (str(status.nat_ip), status.nat_port)
+    if not (status.nat_ip and status.nat_port):
+        raise RuntimeError
     if UDP_SOCKET:
         UDP_SOCKET.sendto(data=bytes(command.value, "utf-8"), addr=addr)
     else:

@@ -70,6 +70,10 @@ def send_command(device_id: uuid.UUID, command: DeviceCommand, session: SessionD
 
 @router.post("/reboot/{device_id}")
 def reboot(device_id: uuid.UUID, session: SessionDep):
+    status = session.get(DeviceStatus, device_id)
+    if status:
+        status.last_inform = None
+    session.commit()
     send_command(device_id, DeviceCommand.REBOOT, session)
 
 
@@ -104,13 +108,9 @@ def provision_all(session: SessionDep):
 
 @router.post("/update-inform")
 def update_inform(session: SessionDep):
-    devices = session.query(Device).all()
+    devices = session.exec(select(Device))
     for device in devices:
-        command = Command(
-            device_id=device.device_id, command=DeviceCommand.UPDATE_INFORM
-        )
-        session.add(command)
-    session.commit()
+        send_command(device.device_id, DeviceCommand.UPDATE_INFORM, session)
 
 
 @router.post("/provision/{device_id}")
@@ -185,8 +185,3 @@ def inform(
     session.merge(status)
     session.commit()
     return rtn
-
-
-@router.get("/script/{name}")
-def get_script(name: str):
-    return FileResponse(pathlib.Path(__file__).parent / "script" / name)

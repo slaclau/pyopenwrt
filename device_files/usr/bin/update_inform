@@ -1,0 +1,10 @@
+#!/bin/sh
+CONTROLLER_IP=$(uci get controller.@inform[0].controller_ip)
+
+wget "http://$CONTROLLER_IP:8000/configuration/informd.tar.gz"
+tar -C / -zxf informd.tar.gz
+rm informd.tar.gz
+
+ucode -c -o /usr/bin/informd /usr/libexec/controller/informd.uc
+
+service inform restart

@@ -1,54 +1,26 @@
 #!/usr/bin/ucode
+
 import { create as create_socket, AF_INET, SOCK_DGRAM, SOCK_NONBLOCK } from 'socket';
 import { stdout } from "fs";
 import * as math from 'math';
 import * as uloop from 'uloop';
 import * as uclient from 'uclient';
-import { popen } from 'fs';
-import { cursor } from 'uci'; // Direct C-bindings to OpenWrt UCI configurations
 import { connect } from 'ubus';
 
 import { get_payload as get_inform_payload } from 'inform';
+import { handle_command } from 'commands';
+import { load_uci_settings } from 'settings';
 
 uloop.init();
 
 ubus = connect();
 
-let config = {};
-
 let nat_ip;
 let nat_port;
 
-function load_uci_settings() {
-    print("Fetching configuration parameters from /etc/config/controller...\n");
-    let uci = cursor();
-
-    // Map UCI defaults with hard fallback safety values
-    config.controller_ip = uci.get_first("controller", "inform", "controller_ip") || "127.0.0.1";
-    config.stun_port = int(uci.get_first("controller", "stun", "stun_port") || 3478);
-    config.stun_interval = int(uci.get_first("controller", "stun", "stun_interval") || 25000);
-    config.inform_interval = int(uci.get_first("controller", "inform", "inform_interval") || 20000);
-
-    print(" -> Settings Loaded: Controller=" + config.controller_ip + ", Port=" + config.stun_port + "\n");
-}
-
 // Load configurations immediately on cold boot execution
-load_uci_settings();
+config = load_uci_settings();
 
-function handle_command(command) {
-    switch (command) {
-        case "inform":
-            print("inform triggered by UDP\n");
-            send_inform();
-            break;
-        case "reboot":
-            ubus.call("rpc-sys", "reboot");
-            break;
-        default:
-            print("received " + command + "\n");
-            break;
-    }
-}
 
 function handle_inform_response(res) {
     if (!res) {
@@ -60,33 +32,34 @@ function handle_inform_response(res) {
 }
 
 function send_inform() {
+    print("sending inform\n");
     let status_payload = get_inform_payload();
     status_payload.nat = { "nat_ip": nat_ip, "nat_port": nat_port };
     let json_string = sprintf("%J", status_payload);
     url = "http://" + config.controller_ip + ":8000/control/inform";
 
     uc = uclient.new(url, null, {
-	data_read: (cb) => {
+        data_read: (cb) => {
             let res = json(uc);
             handle_inform_response(res);
         },
-	data_eof: (cb) => {
-		stdout.flush();
-	},
-	error: (cb, code) => {
-		warn(`Error: ${code}\n`);
-	},
+        data_eof: (cb) => {
+            stdout.flush();
+        },
+        error: (cb, code) => {
+            warn(`Error: ${code}\n`);
+        },
     });
 
     if (!uc.connect()) {
-	warn(`Failed to connect\n`);
-    }
-
-    if (!uc.request("POST", {
-        post_data: json_string,
-        headers: {"Content-Type": "application/json"},
-    })) {
-	warn(`Failed to send request\n`);
+        warn(`Failed to connect\n`);
+    } else {
+        if (!uc.request("POST", {
+            post_data: json_string,
+            headers: { "Content-Type": "application/json" },
+        })) {
+            warn(`Failed to send request\n`);
+        }
     }
 }
 
@@ -101,6 +74,7 @@ function build_stun_packet() {
 
 let stun_timer;
 function send_stun_keepalive() {
+    print("sending stun binding request\n");
     let packet_bytes = build_stun_packet();
     let binary_payload = join("", map(packet_bytes, b => chr(b)));
 

@@ -1,9 +1,10 @@
+import pathlib
 import uuid
 
 from fastapi import APIRouter
-from fastapi.responses import PlainTextResponse, Response
+from fastapi.responses import FileResponse, PlainTextResponse, Response
 from netjsonconfig import OpenWrt
-from sqlalchemy import select
+from sqlmodel import select
 
 
 from .internet import Internet
@@ -36,7 +37,7 @@ def make_network_config(device: Device, session: SessionDep):
     bridge = {
         "name": "main",
         "type": "bridge",
-        "stp": True,
+        "stp": False,
         "bridge_members": ports,
         "vlan_filtering": [
             {
@@ -119,12 +120,10 @@ def make_network_config(device: Device, session: SessionDep):
                 "bridge_loop_avoidance": 1,
             }
         )
-        radios = [
-            radio[0]
-            for radio in session.exec(
-                select(Radio.radio_id).where(Radio.device_id == device.device_id)
-            )
-        ]
+        radios = session.exec(
+            select(Radio.radio_id).where(Radio.device_id == device.device_id)
+        )
+
         for radio in radios:
             config.append(
                 {
@@ -141,13 +140,11 @@ def make_network_config(device: Device, session: SessionDep):
 
 
 def make_wireless_config(device: Device, session: SessionDep):
-    wireless_networks = [wireless[0] for wireless in session.exec(select(Wireless))]
-    radios = [
-        radio[0]
-        for radio in session.exec(
-            select(Radio.radio_id).where(Radio.device_id == device.device_id)
-        )
-    ]
+    wireless_networks = session.exec(select(Wireless))
+    radios = session.exec(
+        select(Radio.radio_id).where(Radio.device_id == device.device_id)
+    )
+
     config = []
     for radio in radios:
         for wireless in wireless_networks:
@@ -183,12 +180,10 @@ def make_wireless_config(device: Device, session: SessionDep):
 
 
 def make_radio_config(device: Device, session: SessionDep):
-    radios: list[str] = [
-        radio[0]
-        for radio in session.exec(
-            select(Radio.radio_id).where(Radio.device_id == device.device_id)
-        )
-    ]
+    radios = session.exec(
+        select(Radio.radio_id).where(Radio.device_id == device.device_id)
+    )
+
     config = []
     for radio in radios:
         config.append(
@@ -208,7 +203,7 @@ def make_radio_config(device: Device, session: SessionDep):
 
 
 def make_controller_config(device: Device, session: SessionDep):
-    networks = session.query(Network).all()
+    networks = session.exec(select(Network))
     return [
         {
             "config_name": "inform",
@@ -217,7 +212,8 @@ def make_controller_config(device: Device, session: SessionDep):
             "management_network": [
                 network.network_id for network in networks if network.management
             ][0],
-        }
+        },
+        {"config_name": "stun", "stun_interval": 20000, "stun_port": 3478},
     ]
 
 
@@ -394,6 +390,8 @@ def make_dhcp_config(device: Device, session: SessionDep):
 @router.get("/netjsonconfig/{device_id}")
 def get_router_netjson_config(device_id: uuid.UUID, session: SessionDep):
     device = session.get(Device, device_id)
+    if not device:
+        raise RuntimeError
 
     general = {
         "hostname": device.hostname.replace(" ", "-").replace("_", "-"),
@@ -443,3 +441,8 @@ def get_router_raw_config(device_id: uuid.UUID, session: SessionDep):
     ow = OpenWrt(config)
     archive = ow.generate()
     return Response(content=archive.getvalue(), media_type="application/gzip")
+
+
+@router.get("/informd.tar.gz")
+def get_device_file_archive():
+    return FileResponse(pathlib.Path(__file__).parent / "informd.tar.gz")

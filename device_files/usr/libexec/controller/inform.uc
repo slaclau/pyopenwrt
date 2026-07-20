@@ -36,10 +36,10 @@ export function get_payload() {
     ip: management_ip,
     boot_time: trim(call("uptime", ["-s"])),
     model: ubus.call("system", "board").model,
-    iwinfo: map(iwinfo_devices.devices, function(device) {
+    iwinfo: map(iwinfo_devices.devices, function (device) {
       return {
         device: device,
-        assoclist: ubus.call("iwinfo", "assoclist", {"device": device}).results,
+        assoclist: ubus.call("iwinfo", "assoclist", { "device": device }).results,
       }
     }),
     ports: ports,
