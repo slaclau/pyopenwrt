@@ -4,13 +4,14 @@ import logging
 
 import aiortc
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.datastructures import Address
 
 app = FastAPI()
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
 
 sites: dict[str, WebSocket] = {}
-clients: dict[str, WebSocket] = {}
+clients: dict[Address, WebSocket] = {}
 
 
 @app.websocket("/controller/ws")
@@ -24,8 +25,9 @@ async def controller_websocket_endpoint(websocket: WebSocket):
             sites[site_id] = websocket
             match data["type"]:
                 case "answer":
-                    await clients[site_id].send_json(data)
-                    logger.info("forwarded answer")
+                    client = Address(host=data["client"][0], port=data["client"][1])
+                    await clients[client].send_json(data)
+                    logger.info(f"forwarded answer to {client} from {site_id}")
                 case "heartbeat":
                     logger.info(f"got heartbeat from {site_id}")
                 case _:
@@ -76,19 +78,36 @@ async def client_websocket_endpoint(websocket: WebSocket):
                     match data["command"]:
                         case "connect":
                             site_id = "test-site"
-                            clients[site_id] = websocket
-                            await sites[site_id].send_json(
-                                {"type": "command", "command": "connect"}
-                            )
+                            assert websocket.client
+                            clients[websocket.client] = websocket
+                            if site_id not in sites:
+                                await websocket.send_json(
+                                    {"type": "error", "error": f"no site {site_id}"}
+                                )
+                            else:
+                                await websocket.send_json(
+                                    {"type": "connected", "site-id": site_id}
+                                )
+                                await sites[site_id].send_json(
+                                    {
+                                        "type": "command",
+                                        "command": "connect",
+                                        "client": websocket.client,
+                                    }
+                                )
 
                         case _:
                             logger.warning(f"got unknown command {data["command"]}")
                 case "offer":
+                    data["client"] = websocket.client
                     await sites[site_id].send_json(data)
-                    logger.info(f"forwarded offer to {site_id}")
+                    logger.info(f"forwarded offer to {site_id} from {websocket.client}")
                 case "ice-candidate":
+                    data["client"] = websocket.client
                     await sites[site_id].send_json(data)
-                    logger.info(f"forwarded candidate to {site_id}")
+                    logger.info(
+                        f"forwarded candidate to {site_id} from {websocket.client}"
+                    )
                 case _:
                     logger.warning(f"got unknown ws type {data["type"]}")
     except WebSocketDisconnect:

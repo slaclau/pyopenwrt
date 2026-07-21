@@ -38,36 +38,40 @@ onMounted(() => {
   socket.onopen = () => {
     console.log("ws opened");
     socket.send(JSON.stringify({ "type": "command", "command": "connect" }));
-    peerConnection = new RTCPeerConnection(configuration);
-    const dc = peerConnection.createDataChannel("http");
-    dc.addEventListener("open", () => {
-      console.log("Established data channel")
-      setInterval(() => {
-        dc.send("hello, this is the browser");
-      }, 1000)
-    })
-    dc.addEventListener("message", (message) => {
-      console.log(`received ${message.data} from the remote site`)
-    })
-
-    peerConnection.addEventListener("icecandidate", (event) => {
-      console.debug("Gathered new ICE candidate", event.candidate)
-      socket.send(JSON.stringify({ "type": "ice-candidate", "ice-candidate": event.candidate }))
-    })
-
-    peerConnection.addEventListener("icegatheringstatechange", () => {
-      console.log("ICE Gathering state is", peerConnection.iceGatheringState)
-    })
-
-    peerConnection.createOffer().then((offer) => {
-      peerConnection.setLocalDescription(offer);
-      socket.send(JSON.stringify({ "type": "offer", "offer": offer }))
-    })
   }
 
   socket.onmessage = (event) => {
     let data = JSON.parse(event.data)
     switch (data.type) {
+      case "connected":
+        console.log("Succesfully initiated connection")
+        peerConnection = new RTCPeerConnection(configuration);
+        const dc = peerConnection.createDataChannel("http");
+        dc.addEventListener("open", () => {
+          console.log("Established data channel")
+          setInterval(() => {
+            dc.send("hello, this is the browser");
+          }, 10000)
+        })
+        dc.addEventListener("message", (message) => {
+          console.log(`received ${message.data} from the remote site`)
+        })
+
+        peerConnection.addEventListener("icecandidate", (event) => {
+          console.debug("Gathered new ICE candidate", event.candidate)
+          socket.send(JSON.stringify({ "type": "ice-candidate", "ice-candidate": event.candidate }))
+        })
+
+        peerConnection.addEventListener("icegatheringstatechange", () => {
+          console.log("ICE Gathering state is", peerConnection.iceGatheringState)
+        })
+
+        peerConnection.createOffer().then((offer) => {
+          peerConnection.setLocalDescription(offer);
+          socket.send(JSON.stringify({ "type": "offer", "offer": offer }))
+        })
+        break;
+
       case "answer":
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
 

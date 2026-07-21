@@ -53,6 +53,9 @@ async def send_heartbeat(websocket: websockets.ClientConnection):
         await asyncio.sleep(10)
 
 
+connections: dict[tuple[str, int], aiortc.RTCPeerConnection] = {}
+
+
 async def listen(websocket: websockets.ClientConnection):
     while True:
         message = json.loads(await websocket.recv())
@@ -61,20 +64,30 @@ async def listen(websocket: websockets.ClientConnection):
             case "command":
                 match message["command"]:
                     case "connect":
+                        logger.info(
+                            f"Connection request received from {tuple(message["client"])}"
+                        )
                         async with httpx.AsyncClient() as client:
                             response = await client.get(SITE_MANAGER_ICE_SERVERS_URI)
                             servers = response.json()
-                        pc = aiortc.RTCPeerConnection(
-                            aiortc.RTCConfiguration(
-                                iceServers=[
-                                    aiortc.RTCIceServer(**server) for server in servers
-                                ]
+                        connections[tuple(message["client"])] = (
+                            aiortc.RTCPeerConnection(
+                                aiortc.RTCConfiguration(
+                                    iceServers=[
+                                        aiortc.RTCIceServer(**server)
+                                        for server in servers
+                                    ]
+                                )
                             )
                         )
 
-                        @pc.on("iceconnectionstatechange")
+                        @connections[tuple(message["client"])].on(
+                            "iceconnectionstatechange"
+                        )
                         def on_ice_connection_state_change():
-                            match pc.iceConnectionState:
+                            match connections[
+                                tuple(message["client"])
+                            ].iceConnectionState:
                                 case "checking":
                                     logger.debug("Checking ICE candidates")
                                 case "completed":
@@ -82,9 +95,13 @@ async def listen(websocket: websockets.ClientConnection):
                                 case other:
                                     logger.debug(f"ICE connection state is {other}")
 
-                        @pc.on("icegatheringstatechange")
+                        @connections[tuple(message["client"])].on(
+                            "icegatheringstatechange"
+                        )
                         def on_ice_gathering_state_change():
-                            match pc.iceGatheringState:
+                            match connections[
+                                tuple(message["client"])
+                            ].iceGatheringState:
                                 case "gathering":
                                     logger.debug("Gathering ICE candidates")
                                 case "complete":
@@ -92,13 +109,15 @@ async def listen(websocket: websockets.ClientConnection):
                                 case other:
                                     logger.debug(f"ICE gathering state is {other}")
 
-                        @pc.on("datachannel")
+                        @connections[tuple(message["client"])].on("datachannel")
                         def on_data_channel(channel: aiortc.RTCDataChannel):
                             logger.info(f"data channel opened")
 
                             @channel.on("message")
-                            def on_message(message):
-                                logger.info(f"got '{message}' from browser")
+                            def on_message(dc_message):
+                                logger.info(
+                                    f"got '{dc_message}' from {message["client"]}"
+                                )
                                 channel.send(f"hello back")
 
                     case _:
@@ -107,19 +126,25 @@ async def listen(websocket: websockets.ClientConnection):
             case "offer":
                 offer = aiortc.RTCSessionDescription(**message["offer"])
                 logger.info("Received WebRTC offer")
-                await pc.setRemoteDescription(offer)
+                await connections[tuple(message["client"])].setRemoteDescription(offer)
 
-                answer = await pc.createAnswer()
+                answer = await connections[tuple(message["client"])].createAnswer()
 
-                await pc.setLocalDescription(answer)
-                while pc.iceGatheringState != "complete":
+                await connections[tuple(message["client"])].setLocalDescription(answer)
+                while (
+                    connections[tuple(message["client"])].iceGatheringState
+                    != "complete"
+                ):
                     await asyncio.sleep(0.01)
                 await websocket.send(
                     json.dumps(
                         {
                             "type": "answer",
                             "site-id": SITE_ID,
-                            "answer": pc.localDescription.__dict__,
+                            "client": tuple(message["client"]),
+                            "answer": connections[
+                                tuple(message["client"])
+                            ].localDescription.__dict__,
                         }
                     )
                 )
@@ -148,7 +173,9 @@ async def listen(websocket: websockets.ClientConnection):
                     sdpMLineIndex=candidate["sdpMLineIndex"],
                 )
 
-                await pc.addIceCandidate(rtc_candidate)
+                await connections[tuple(message["client"])].addIceCandidate(
+                    rtc_candidate
+                )
 
             case _:
                 logger.warning(f"got unknown ws type {message["type"]}")
