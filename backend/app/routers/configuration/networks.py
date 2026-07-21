@@ -15,7 +15,7 @@ router = APIRouter(prefix="/configuration/networks", tags=["networks"])
 
 class IPv4AddressType(AutoString):
     def process_bind_param(self, value, dialect) -> typing.Optional[str]:
-        if value is None:
+        if value is None or value == "None":
             return None
 
         if isinstance(value, str):
@@ -28,7 +28,7 @@ class IPv4AddressType(AutoString):
         return str(value)
 
     def process_result_value(self, value, dialect) -> typing.Optional[IPv4Address]:
-        if value is None:
+        if value is None or value == "None":
             return None
 
         return IPv4Address(value)

@@ -24,9 +24,9 @@ router = APIRouter(prefix="/status", tags=["status"])
 class DeviceStatusBase(SQLModel):
     device_id: uuid.UUID = Field(primary_key=True, foreign_key="device.device_id")
     last_inform: float | None = Field(default=None)
-    last_ip: Optional[IPv4Address] | None = Field(default=None)
+    last_ip: Optional[IPv4Address] = Field(default=None, sa_type=IPv4AddressType)
     boot_time: datetime.datetime | None = Field(default=None)
-    nat_ip: Optional[IPv4Address] | None = Field(default=None)
+    nat_ip: Optional[IPv4Address] = Field(default=None, sa_type=IPv4AddressType)
     nat_port: Optional[int] = Field(default=None)
 
     @computed_field  # type: ignore[prop-decorator]
@@ -86,10 +86,22 @@ class DHCPLease(DHCPLeaseBase, table=True):
 def get_status(session: SessionDep) -> Status:
     device_status: list[DeviceStatusWithDevice] = []
     for device in get_all_devices(session):
-        status: DeviceStatusWithDevice = session.get(DeviceStatus, device.device_id)
-        if not status:
-            status = DeviceStatusWithDevice(device_id=device.device_id, device=device)
-        device_status.append(status)
+        status = session.get(DeviceStatus, device.device_id)
+        if status:
+            status_with_device = DeviceStatusWithDevice(
+                device=status.device,
+                device_id=device.device_id,
+                last_inform=status.last_inform,
+                last_ip=status.last_ip,
+                boot_time=status.boot_time,
+                nat_ip=status.nat_ip,
+                nat_port=status.nat_port,
+            )
+        else:
+            status_with_device = DeviceStatusWithDevice(
+                device_id=device.device_id, device=device
+            )
+        device_status.append(status_with_device)
     network_status = []
     leases = session.exec(
         select(DHCPLease).where(DHCPLease.expires >= time.time())

@@ -3,6 +3,7 @@ import json
 import logging
 import time
 
+from fastapi import FastAPI
 import httpx
 
 import aiortc
@@ -16,9 +17,10 @@ SITE_MANAGER_ICE_SERVERS_URI = (
 SITE_ID = "test-site"
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
+access_logger = logging.getLogger(f"uvicorn.access.{__name__}")
 
 
-async def manage_site_manager_connection():
+async def manage_site_manager_connection(app: FastAPI):
     try:
         while True:
             try:
@@ -28,7 +30,9 @@ async def manage_site_manager_connection():
                     logger.info(
                         f"connected to site-manager ws at {websocket.remote_address}"
                     )
-                    await asyncio.gather(send_heartbeat(websocket), listen(websocket))
+                    await asyncio.gather(
+                        send_heartbeat(websocket), listen(websocket, app)
+                    )
 
             except (websockets.ConnectionClosed, OSError) as e:
                 logger.warning(
@@ -56,7 +60,8 @@ async def send_heartbeat(websocket: websockets.ClientConnection):
 connections: dict[tuple[str, int], aiortc.RTCPeerConnection] = {}
 
 
-async def listen(websocket: websockets.ClientConnection):
+async def listen(websocket: websockets.ClientConnection, app: FastAPI):
+    transport = httpx.ASGITransport(app=app)
     while True:
         message = json.loads(await websocket.recv())
 
@@ -114,11 +119,45 @@ async def listen(websocket: websockets.ClientConnection):
                             logger.info(f"data channel opened")
 
                             @channel.on("message")
-                            def on_message(dc_message):
-                                logger.info(
-                                    f"got '{dc_message}' from {message["client"]}"
-                                )
-                                channel.send(f"hello back")
+                            async def on_message(dc_message):
+                                dc_message = json.loads(dc_message)
+                                match dc_message["type"]:
+                                    case "request":
+                                        async with httpx.AsyncClient(
+                                            transport=transport
+                                        ) as client:
+                                            resp = await client.request(
+                                                method=dc_message["method"],
+                                                url="http://internal"
+                                                + dc_message["path"],
+                                                json=(
+                                                    json.loads(dc_message["body"])
+                                                    if dc_message["body"]
+                                                    else None
+                                                ),
+                                            )
+                                            access_logger.info(
+                                                '%s - "%s %s HTTP/%s" %d',
+                                                "WebRTC Data Channel",
+                                                dc_message["method"],
+                                                dc_message["path"],
+                                                "WebRTC",
+                                                resp.status_code,
+                                            )
+                                            channel.send(
+                                                json.dumps(
+                                                    {
+                                                        "type": "response",
+                                                        "id": dc_message["id"],
+                                                        "body": resp.json(),
+                                                        "status": resp.status_code,
+                                                    }
+                                                )
+                                            )
+                                    case _:
+                                        logger.warning(
+                                            f"unexpected data channel message {dc_message}"
+                                        )
 
                     case _:
                         logger.warning(f"got unknown command {message["command"]}")

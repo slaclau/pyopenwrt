@@ -29,7 +29,7 @@ logger = logging.getLogger(f"uvicorn.{__name__}")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
-    asyncio.create_task(manage_site_manager_connection())
+    asyncio.create_task(manage_site_manager_connection(app))
     asyncio.create_task(setup_stun_server())
     asyncio.create_task(create_device_file_archive())
     yield

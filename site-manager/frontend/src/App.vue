@@ -1,6 +1,13 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, ref, type Ref } from 'vue';
 
+import Controller from 'controller/App.vue'
+import { client, dataChannel, handleResponse } from './client.ts';
+import { getStatusStatusGet } from 'controller/sdk/sdk.gen.ts';
+import type { Status } from 'controller/sdk/types.gen.ts';
+
+const status: Ref<string | Status> = ref("Waiting for status");
+const connected: Ref<boolean> = ref(false)
 
 onMounted(() => {
   console.log("mounted");
@@ -47,14 +54,22 @@ onMounted(() => {
         console.log("Succesfully initiated connection")
         peerConnection = new RTCPeerConnection(configuration);
         const dc = peerConnection.createDataChannel("http");
-        dc.addEventListener("open", () => {
-          console.log("Established data channel")
-          setInterval(() => {
-            dc.send("hello, this is the browser");
-          }, 10000)
+        dataChannel.value = dc;
+
+        dc.addEventListener("open", (event) => {
+          connected.value = true;
         })
+
         dc.addEventListener("message", (message) => {
-          console.log(`received ${message.data} from the remote site`)
+          console.debug(`received ${message} from the remote site`)
+          const data = JSON.parse(message.data);
+          switch (data.type) {
+            case "response":
+              handleResponse(data)
+              break;
+            default:
+              console.warn("unexpected data channel message", data)
+          }
         })
 
         peerConnection.addEventListener("icecandidate", (event) => {
@@ -74,8 +89,8 @@ onMounted(() => {
 
       case "answer":
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-
         break;
+
       default:
         console.warn("unknown ws message type", data.type)
     }
@@ -88,11 +103,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <Controller v-if="connected" />
+  <div v-else>
+    Waiting for data channel to be established
+  </div>
 </template>
 
 <style scoped></style>
