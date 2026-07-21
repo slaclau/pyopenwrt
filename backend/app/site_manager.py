@@ -5,8 +5,8 @@ import time
 
 import websockets
 
-SITE_MANAGER_WS_URI = "ws://localhost:8001/ws"  # Target external endpoint
-
+SITE_MANAGER_WS_URI = "ws://localhost:8001/controller/ws"  # Target external endpoint
+SITE_ID = "test-site"
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
 
@@ -23,7 +23,13 @@ async def send_site_manager_heartbeat():
                     )
 
                     while True:
-                        message = json.dumps({"type": "heartbeat", "time": time.time()})
+                        message = json.dumps(
+                            {
+                                "type": "heartbeat",
+                                "site-id": SITE_ID,
+                                "time": time.time(),
+                            }
+                        )
                         await websocket.send(message)
                         logger.info(f"sent {message} to site manager")
                         await asyncio.sleep(10)
