@@ -3,7 +3,7 @@ import {
   provisionControlProvisionDeviceIdPost,
   rebootControlRebootDeviceIdPost,
   type DeviceStatusWithDevice,
-} from '@/sdk'
+} from 'controller/sdk'
 import { client } from '@/client'
 const props = defineProps<{
   device: DeviceStatusWithDevice | undefined

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { makeIcon } from '@/utils'
+import { makeIcon } from 'controller/utils'
 import SvgIcon from '@jamescoyle/vue-icon'
-import { type Device } from '@/sdk'
+import { type Device } from 'controller/sdk'
 
 defineProps<{
   device: Device | undefined

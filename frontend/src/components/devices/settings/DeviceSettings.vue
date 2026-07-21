@@ -3,8 +3,8 @@ import {
   getDeviceConfigurationDevicesDeviceIdGet,
   provisionControlProvisionDeviceIdPost,
   updateDeviceConfigurationDevicesDeviceIdPut,
-} from '@/sdk'
-import type { DeviceStatusWithDevice } from '../../../sdk/types.gen'
+  type DeviceStatusWithDevice
+} from 'controller/sdk'
 import { client } from '@/client'
 
 const props = defineProps<{

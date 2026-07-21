@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import {
-  adoptControlAdoptDeviceIdPost,
-} from '@/sdk/sdk.gen.ts'
-import type { DeviceStatusWithDevice } from '../../../sdk/types.gen'
-import DeviceDetails from './DeviceDetails.vue'
-import DeviceSummary from './DeviceSummary.vue'
+
+import { adoptControlAdoptDeviceIdPost, type DeviceStatusWithDevice } from 'controller/sdk'
+import DeviceDetails from 'controller/components/devices/overview/DeviceDetails.vue'
+import DeviceSummary from 'controller/components/devices/overview/DeviceSummary.vue'
 import { client } from '@/client.ts'
 
 const props = defineProps<{

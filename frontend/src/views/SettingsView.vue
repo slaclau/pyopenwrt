@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Status } from '@/sdk'
-import NetworksView from './NetworksView.vue'
-import WirelessView from './WirelessView.vue'
+import NetworksView from 'controller/views/NetworksView.vue'
+import WirelessView from 'controller/views/WirelessView.vue'
 
 defineProps<{
   status: Status | null

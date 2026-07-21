@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { HostTimeStats } from '@/sdk'
-import { formatBytes, getAppplicationIcon, getApplicationName } from '@/utils'
+import type { HostTimeStats } from 'controller/sdk'
+import { formatBytes, getAppplicationIcon, getApplicationName } from 'controller/utils'
 import { ref } from 'vue'
 
 defineProps<{
@@ -17,11 +17,7 @@ const hostsMode = ref(false)
     <el-radio-button :value="false">Applications</el-radio-button>
     <el-radio-button :value="true">Hosts</el-radio-button>
   </el-radio-group>
-  <el-table
-    v-if="hostsMode"
-    table-layout="auto"
-    :data="dpi_data?.hosts?.filter((host) => host.download + host.upload)"
-  >
+  <el-table v-if="hostsMode" table-layout="auto" :data="dpi_data?.hosts?.filter((host) => host.download + host.upload)">
     <el-table-column label="Host">
       <template #default="scope"> {{ scope.row.mac }} / {{ scope.row.ip }} </template>
     </el-table-column>
@@ -31,18 +27,10 @@ const hostsMode = ref(false)
       </template>
     </el-table-column>
   </el-table>
-  <el-table
-    v-else
-    table-layout="auto"
-    :data="dpi_data?.categories?.filter((cat) => cat.download + cat.upload)"
-  >
+  <el-table v-else table-layout="auto" :data="dpi_data?.categories?.filter((cat) => cat.download + cat.upload)">
     <el-table-column :width="40">
       <template #default="scope">
-        <SvgIcon
-          type="mdi"
-          :path="getAppplicationIcon(scope.row.application, scope.row.protocol)"
-          :size="24"
-        />
+        <SvgIcon type="mdi" :path="getAppplicationIcon(scope.row.application, scope.row.protocol)" :size="24" />
       </template>
     </el-table-column>
     <el-table-column label="Application">

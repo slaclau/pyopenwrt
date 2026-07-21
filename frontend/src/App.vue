@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { client } from './client'
-import { getStatusStatusGet, type Status } from './sdk'
-import DevicesView from './views/DevicesView.vue'
-import OverviewView from './views/OverviewView.vue'
-import SettingsView from './views/SettingsView.vue'
-import DPIView from './views/DPIView.vue'
+import { client } from '@/client'
+import { getStatusStatusGet, type Status } from 'controller/sdk'
+import DevicesView from 'controller/views/DevicesView.vue'
+import OverviewView from 'controller/views/OverviewView.vue'
+import SettingsView from 'controller/views/SettingsView.vue'
+import DPIView from 'controller/views/DPIView.vue'
 
 import SvgIcon from '@jamescoyle/vue-icon'
 import {
@@ -46,10 +46,8 @@ onUnmounted(() => {
     <el-header>
       <h1>
         OpenWrt Controller
-        <span style="float: right"
-          ><el-button @click="toggleDark()"
-            ><svg-icon type="mdi" :path="mdiThemeLightDark" :size="24" /></el-button
-        ></span>
+        <span style="float: right"><el-button @click="toggleDark()"><svg-icon type="mdi" :path="mdiThemeLightDark"
+              :size="24" /></el-button></span>
       </h1>
     </el-header>
     <el-main>
@@ -78,9 +76,9 @@ onUnmounted(() => {
           <DPIView />
         </el-tab-pane>
         <el-tab-pane name="settings">
-          <template #label> <svg-icon type="mdi" :path="mdiCog" :size="24" /> </template
-          ><SettingsView :status="status"
-        /></el-tab-pane>
+          <template #label> <svg-icon type="mdi" :path="mdiCog" :size="24" /> </template>
+          <SettingsView :status="status" />
+        </el-tab-pane>
       </el-tabs>
     </el-main>
   </el-container>

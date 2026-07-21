@@ -3,15 +3,15 @@ import { client } from '@/client'
 import {
   getHostLastHourStatsNetifyStatsByHostLastDayGet,
   type HostTimeStats,
-} from '@/sdk'
+} from 'controller/sdk'
 
 import { onMounted, onUnmounted, ref, type Ref } from 'vue'
 
 import { Chart as ChartJS, registerables } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import DPITable from './DPITable.vue'
-import { getApplicationName, setIntervalImmediate } from '@/utils.ts'
+import DPITable from 'controller/views/DPITable.vue'
+import { getApplicationName, setIntervalImmediate } from 'controller/utils.ts'
 ChartJS.register(...registerables)
 ChartJS.register(ChartDataLabels)
 

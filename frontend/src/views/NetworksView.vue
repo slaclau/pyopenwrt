@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { getAllNetworksConfigurationNetworksGet, type NetworkOutput, type NetworkStatus, type Status } from '@/sdk'
-import { client } from '../client'
+import { getAllNetworksConfigurationNetworksGet, type NetworkOutput, type NetworkStatus, type Status } from 'controller/sdk'
+import { client } from '@/client'
 import { ref, type Ref } from 'vue'
 
-import NetworkDrawerComponent from '@/components/settings/networks/NetworkDrawerComponent.vue'
+import NetworkDrawerComponent from 'controller/components/settings/networks/NetworkDrawerComponent.vue'
 
 const networks: Ref<Array<NetworkOutput> | undefined> = ref([])
 getAllNetworksConfigurationNetworksGet({ client }).then((res) => {

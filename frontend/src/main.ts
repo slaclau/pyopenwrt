@@ -1,5 +1,5 @@
 // if you just want to import css
-import './style/index.scss'
+import 'controller/style/index.scss'
 
 import 'element-plus/theme-chalk/dark/css-vars.css'
 

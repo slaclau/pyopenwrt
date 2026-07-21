@@ -1,5 +1,7 @@
-import type { DeviceRole } from './sdk/types.gen'
+import type { DeviceRole } from 'controller/sdk/types.gen'
 import { mdiRouterNetworkWireless, mdiRouterNetwork, mdiAccessPointNetwork, mdiLan } from '@mdi/js'
+import { getApplicationsMapNetifyApplicationsGet } from 'controller/sdk'
+import { client } from '@/client'
 
 export function makeIcon(roles: Array<DeviceRole> | undefined) {
   if (roles === undefined) return
@@ -26,21 +28,43 @@ export function formatTime(seconds: number) {
 }
 
 let applications_map: { [key: string]: string }
-getApplicationsMapNetifyApplicationsGet({ client }).then((res) => {
-  if (res.data) applications_map = res.data
-})
+
 
 export function getApplicationName(application: string, protocol: string) {
   if (application === 'Unknown') return protocol
-  if (application in applications_map) return applications_map[application]
-  if (application.includes('netify.'))
+
+  function getApplicationNameInner(application: string) {
+    if (application in applications_map) return applications_map[application]
+    if (application.includes('netify.'))
+      return application
+        .replace('netify.', '')
+        .replace('-', ' ')
+        .split(' ')
+        .map((word) => word.charAt(0).toUpperCase() + word.substring(1))
+        .join(' ')
     return application
-      .replace('netify.', '')
-      .replace('-', ' ')
-      .split(' ')
-      .map((word) => word.charAt(0).toUpperCase() + word.substring(1))
-      .join(' ')
-  return application
+  }
+
+  if (!applications_map) {
+    getApplicationsMapNetifyApplicationsGet({ client }).then((res) => {
+      if (res.data) {
+        applications_map = res.data;
+        return getApplicationNameInner(application)
+      } else {
+        return application
+          .replace('netify.', '')
+          .replace('-', ' ')
+          .split(' ')
+          .map((word) => word.charAt(0).toUpperCase() + word.substring(1))
+          .join(' ')
+      }
+    })
+  } else {
+    return getApplicationNameInner(application)
+  }
+
+
+
 }
 
 const networkManagementIcon = mdiServerOutline
@@ -107,8 +131,6 @@ import {
   mdiWikipedia,
   mdiYoutube,
 } from '@mdi/js'
-import { getApplicationsMapNetifyApplicationsGet } from './sdk'
-import { client } from './client'
 
 export function getAppplicationIcon(application: string, protocol: string) {
   if (application === 'Unknown') {

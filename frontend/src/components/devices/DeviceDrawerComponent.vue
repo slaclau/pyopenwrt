@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { DeviceStatusWithDevice } from '../../sdk/types.gen'
-import DeviceOverview from './overview/DeviceOverview.vue'
-import DeviceSettings from './settings/DeviceSettings.vue'
-import DeviceCommands from './overview/DeviceCommands.vue'
+import type { DeviceStatusWithDevice } from 'controller/sdk/types.gen'
+import DeviceOverview from 'controller/components/devices/overview/DeviceOverview.vue'
+import DeviceSettings from 'controller/components/devices/settings/DeviceSettings.vue'
+import DeviceCommands from 'controller/components/devices/overview/DeviceCommands.vue'
 
 defineProps<{
   device: DeviceStatusWithDevice | undefined

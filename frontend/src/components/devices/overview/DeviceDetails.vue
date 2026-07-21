@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { DeviceStatusWithDevice } from '../../../sdk/types.gen'
-import { formatTime } from '../../../utils'
-import DetailsRow from '../../DetailsRow.vue'
+import type { DeviceStatusWithDevice } from 'controller/sdk/types.gen'
+import { formatTime } from 'controller/utils'
+import DetailsRow from 'controller/components/DetailsRow.vue'
 defineProps<{
   device: DeviceStatusWithDevice | undefined
 }>()

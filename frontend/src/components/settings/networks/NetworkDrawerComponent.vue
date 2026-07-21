@@ -6,8 +6,8 @@ import {
   type NetworkInput,
   type NetworkOutput,
   createNetworkConfigurationNetworksPost,
-} from '@/sdk'
-import { client } from '../../../client'
+} from 'controller/sdk'
+import { client } from '@/client'
 import { ref, type Ref } from 'vue'
 
 const props = defineProps<{
