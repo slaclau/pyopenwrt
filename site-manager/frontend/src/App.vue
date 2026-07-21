@@ -17,21 +17,21 @@ onMounted(() => {
         username: "d87da67fe0fe83c87d7f00ab",
         credential: "E2B6csPO3iJL2ocH",
       },
-      // {
-      //   urls: "turn:global.relay.metered.ca:80?transport=tcp",
-      //   username: "d87da67fe0fe83c87d7f00ab",
-      //   credential: "E2B6csPO3iJL2ocH",
-      // },
-      // {
-      //   urls: "turn:global.relay.metered.ca:443",
-      //   username: "d87da67fe0fe83c87d7f00ab",
-      //   credential: "E2B6csPO3iJL2ocH",
-      // },
-      // {
-      //   urls: "turns:global.relay.metered.ca:443?transport=tcp",
-      //   username: "d87da67fe0fe83c87d7f00ab",
-      //   credential: "E2B6csPO3iJL2ocH",
-      // },
+      {
+        urls: "turn:global.relay.metered.ca:80?transport=tcp",
+        username: "d87da67fe0fe83c87d7f00ab",
+        credential: "E2B6csPO3iJL2ocH",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:443",
+        username: "d87da67fe0fe83c87d7f00ab",
+        credential: "E2B6csPO3iJL2ocH",
+      },
+      {
+        urls: "turns:global.relay.metered.ca:443?transport=tcp",
+        username: "d87da67fe0fe83c87d7f00ab",
+        credential: "E2B6csPO3iJL2ocH",
+      },
     ],
   }
 
@@ -41,24 +41,22 @@ onMounted(() => {
     peerConnection = new RTCPeerConnection(configuration);
     const dc = peerConnection.createDataChannel("http");
     dc.addEventListener("open", () => {
-      console.log("dc open")
+      console.log("Established data channel")
       setInterval(() => {
-        dc.send("test");
+        dc.send("hello, this is the browser");
       }, 1000)
+    })
+    dc.addEventListener("message", (message) => {
+      console.log(`received ${message.data} from the remote site`)
     })
 
     peerConnection.addEventListener("icecandidate", (event) => {
-      console.log("new candidate", event.candidate)
+      console.debug("Gathered new ICE candidate", event.candidate)
       socket.send(JSON.stringify({ "type": "ice-candidate", "ice-candidate": event.candidate }))
     })
-    peerConnection.addEventListener("icecandidateerror", (e) => {
-      console.log("error", e)
-    })
-    peerConnection.addEventListener("connectionstatechange", () => {
-      console.log("conn state", peerConnection.connectionState)
-    })
+
     peerConnection.addEventListener("icegatheringstatechange", () => {
-      console.log("gather state", peerConnection.iceGatheringState)
+      console.log("ICE Gathering state is", peerConnection.iceGatheringState)
     })
 
     peerConnection.createOffer().then((offer) => {
@@ -69,19 +67,18 @@ onMounted(() => {
 
   socket.onmessage = (event) => {
     let data = JSON.parse(event.data)
-    console.log("received", data);
     switch (data.type) {
-      case "offer":
-        peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-        console.log("established")
+      case "answer":
+        peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+
         break;
       default:
-        console.warn("unknown ws type", data.type)
+        console.warn("unknown ws message type", data.type)
     }
   }
 
   socket.onclose = () => {
-    console.log("ws closed");
+    console.warn("ws closed");
   }
 })
 </script>

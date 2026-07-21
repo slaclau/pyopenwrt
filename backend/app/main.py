@@ -20,7 +20,7 @@ from .routers.configuration import (
 from .routers.control import inform
 from .routers.status import status
 from .routers import netify
-from .site_manager import send_site_manager_heartbeat
+from .site_manager import manage_site_manager_connection
 from .stun import setup_stun_server
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
@@ -29,7 +29,7 @@ logger = logging.getLogger(f"uvicorn.{__name__}")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
-    asyncio.create_task(send_site_manager_heartbeat())
+    asyncio.create_task(manage_site_manager_connection())
     asyncio.create_task(setup_stun_server())
     asyncio.create_task(create_device_file_archive())
     yield

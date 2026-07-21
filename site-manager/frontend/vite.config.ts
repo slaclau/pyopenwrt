@@ -17,6 +17,7 @@ export default defineConfig({
   },
   server: {
     host: true,
-    allowedHosts: ["sl-xps15-fedora"]
+    allowedHosts: ["sl-xps15-fedora"],
+    port: 5174
   }
 })

@@ -75,9 +75,11 @@ class DeviceWithStatus(DeviceBase):
 def get_all_devices(session: SessionDep) -> list[Device]:
     return session.query(Device).all()
 
+
 @router.get("/by-role/{role}")
 def get_device_by_role(role: DeviceRole, session: SessionDep):
     return [device for device in get_all_devices(session) if role in device.roles]
+
 
 @router.get("/{device_id}")
 def get_device(device_id: uuid.UUID, session: SessionDep) -> Device:
