@@ -193,7 +193,7 @@ def make_radio_config(device: Device, session: SessionDep):
                 "phy": radio.replace("radio", "phy"),
                 "protocol": "802.11n",
                 "band": "2g",
-                "channel": 0,
+                "channel": 6,
                 "channel_width": 20,
                 "country": "GB",
             }
