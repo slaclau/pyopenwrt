@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { site_manager_client } from '@/client';
 import { getAllMySitesSitesGet, type Site } from '@/sdk';
+
 import { onMounted, ref, type Ref } from 'vue';
 
 const sites: Ref<Site[]> = ref([])

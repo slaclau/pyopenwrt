@@ -16,7 +16,8 @@
     "openapi-ts": "openapi-ts -i http://localhost:8001/openapi.json -o src/sdk"
   },
   "dependencies": {
-    "@hey-api/openapi-ts": "^0.99.0",
+    "@hey-api/openapi-ts": "^0.97.0",
+    "@jamescoyle/vue-icon": "^0.1.2",
     "@mdi/js": "^7.4.47",
     "@vueuse/core": "^14.3.0",
     "chart.js": "^4.5.1",

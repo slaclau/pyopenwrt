@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { onMounted, ref, type Ref } from 'vue';
 
-import Controller from 'controller/App.vue'
-import { dataChannel, handleResponse, site_manager_client } from './client.ts';
-import type { Status } from 'controller/sdk/types.gen.ts';
-import { getAllMySitesSitesGet } from './sdk/sdk.gen.ts';
-import type { Site } from './sdk/types.gen.ts';
+import { dataChannel, handleResponse } from './client.ts';
+import { mdiThemeLightDark } from '@mdi/js';
+import { useDark, useToggle } from '@vueuse/core';
 
-const status: Ref<string | Status> = ref("Waiting for status");
+import SvgIcon from '@jamescoyle/vue-icon'
+
+
+const isDark = useDark()
+const toggleDark = useToggle(isDark)
+
 const connected: Ref<boolean> = ref(false)
 
 function connect(url: string) {
@@ -114,7 +117,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <router-view />
+  <el-container>
+    <el-header>
+      <h1>
+        OpenWrt Site Manager
+        <span style="float: right"><el-button @click="toggleDark()"><svg-icon type="mdi" :path="mdiThemeLightDark"
+              :size="24" /></el-button></span>
+      </h1>
+    </el-header>
+    <el-body>
+      <router-view />
+    </el-body>
+  </el-container>
 </template>
 
 <style scoped></style>
