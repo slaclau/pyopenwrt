@@ -5,7 +5,7 @@ import { onMounted, onUnmounted, ref, type Ref } from 'vue';
 import { dataChannel, handleResponse, site_manager_client } from '@/client.ts';
 import { useRoute } from 'vue-router';
 
-import Controller from 'controller/App.vue'
+import MainView from 'controller/views/MainView.vue'
 
 const connected: Ref<boolean> = ref(false)
 const route = useRoute();
@@ -93,10 +93,11 @@ onMounted(() => {
 
 onUnmounted(() => {
     socket.close();
-    peerConnection.close();
+    if (peerConnection)
+        peerConnection.close();
 })
 </script>
 
 <template>
-    <Controller v-loading="!connected" />
+    <MainView v-loading="!connected" />
 </template>
