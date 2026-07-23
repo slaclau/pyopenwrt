@@ -2,8 +2,10 @@
 import { onMounted, ref, type Ref } from 'vue';
 
 import Controller from 'controller/App.vue'
-import { dataChannel, handleResponse } from './client.ts';
+import { dataChannel, handleResponse, site_manager_client } from './client.ts';
 import type { Status } from 'controller/sdk/types.gen.ts';
+import { getAllMySitesSitesGet } from './sdk/sdk.gen.ts';
+import type { Site } from './sdk/types.gen.ts';
 
 const status: Ref<string | Status> = ref("Waiting for status");
 const connected: Ref<boolean> = ref(false)
@@ -100,22 +102,19 @@ function connect(url: string) {
 
   socket.onclose = () => {
     console.warn("ws closed");
-    connect(url);
+    // connect(url);
   }
 }
 
 onMounted(() => {
   console.log("mounted");
 
-  connect('ws://100.64.0.7:8001/ws')
+  // connect('ws://100.64.0.7:8001/ws')
 })
 </script>
 
 <template>
-  <Controller v-if="connected" />
-  <div v-else>
-    Waiting for data channel to be established
-  </div>
+  <router-view />
 </template>
 
 <style scoped></style>

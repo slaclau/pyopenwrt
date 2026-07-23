@@ -17,6 +17,14 @@ export default defineConfig({
     },
   },
   server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
     host: true,
     allowedHosts: ["sl-xps15-fedora"],
     port: 5174

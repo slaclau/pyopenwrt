@@ -9,6 +9,9 @@ import {
 } from 'controller/sdk/client'
 import { ref, type Ref } from 'vue'
 import { assert } from '@vueuse/core';
+import { getAuthToken } from './sdk/core/auth.gen';
+import { ElDialog, ElMessage, ElNotification } from 'element-plus';
+import router from './router';
 
 /**
  * The `createClientConfig()` function will be called on client initialization
@@ -87,10 +90,61 @@ export function handleResponse(message) {
     }
 }
 
-
 export const client = createClient(
     createConfig<ClientOptions>({
         baseUrl: window.location.origin + '/api',
         fetch: sendRequest,
     }),
 )
+
+export const site_manager_client = createClient(
+    createConfig<ClientOptions>({
+        baseUrl: window.location.origin + '/api',
+        auth: () => localStorage.getItem("auth_token") ?? ""
+    })
+)
+
+async function myInterceptor(response: Response) {
+    const status = response.status
+
+    switch (status) {
+        case 401:
+            // Handle unauthorized / token expired
+            localStorage.removeItem('auth_token')
+            ElMessage.error('Session expired. Please log in again.')
+
+            // Bounce them back to login page
+            router.push({
+                name: 'Login',
+                query: { redirect: router.currentRoute.value.fullPath }
+            })
+            break
+
+        case 403:
+            // Handle forbidden access
+            ElNotification.error({
+                title: 'Access Denied',
+                message: 'You do not have permission to view this resource.'
+            })
+            break
+
+        case 500:
+            // Handle server crashes
+            ElNotification.error({
+                title: 'Server Error',
+                message: 'Something went wrong on our end. Please try again later.'
+            })
+            break
+
+        default:
+            // Handle network errors or unhandled status codes
+            if (!status) {
+                ElMessage.error('Network error. Please check your internet connection.')
+            }
+            break
+    }
+
+    return response
+}
+
+site_manager_client.interceptors.response.use(myInterceptor)
