@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 <script setup lang="ts">
 
-const props = defineProps<{ value: unknown, name: string, formatFunc: (value: unknown) => string }>()
+const props = defineProps<{ value?: unknown, name?: string, formatFunc?: (value: unknown) => string }>()
 
 
 function format(val: unknown) {

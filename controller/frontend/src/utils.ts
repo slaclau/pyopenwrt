@@ -30,6 +30,7 @@ export function formatTime(seconds: number) {
 let applications_map: { [key: string]: string }
 
 function getApplicationNameInner(arg: string) {
+  if (!arg) { return "Unknown" }
   if (arg in applications_map) { return applications_map[arg] }
   else if (arg.includes('netify.')) {
     return arg
