@@ -29,21 +29,23 @@ export function formatTime(seconds: number) {
 
 let applications_map: { [key: string]: string }
 
+function getApplicationNameInner(arg: string) {
+  if (arg in applications_map) { return applications_map[arg] }
+  else if (arg.includes('netify.')) {
+    return arg
+      .replace('netify.', '')
+      .replace('-', ' ')
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.substring(1))
+      .join(' ')
+  } else {
+    return arg
+  }
+}
 
 export function getApplicationName(application: string, protocol: string) {
   if (application === 'Unknown') return protocol
 
-  function getApplicationNameInner(application: string) {
-    if (application in applications_map) return applications_map[application]
-    if (application.includes('netify.'))
-      return application
-        .replace('netify.', '')
-        .replace('-', ' ')
-        .split(' ')
-        .map((word) => word.charAt(0).toUpperCase() + word.substring(1))
-        .join(' ')
-    return application
-  }
 
   if (!applications_map) {
     getApplicationsMapNetifyApplicationsGet({ client }).then((res) => {
