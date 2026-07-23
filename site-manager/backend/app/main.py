@@ -1,13 +1,28 @@
+from contextlib import asynccontextmanager
 import logging
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.datastructures import Address
 
-app = FastAPI()
+from .dependencies import create_db_and_tables
+from .users import users
+from .sites import sites
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
+app.include_router(users)
+app.include_router(sites)
+
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
 
-sites: dict[str, WebSocket] = {}
+site_websockets: dict[str, WebSocket] = {}
 clients: dict[Address, WebSocket] = {}
 
 # TODO: #1 Add db backend
@@ -22,7 +37,7 @@ async def controller_websocket_endpoint(websocket: WebSocket):
         while True:
             data = await websocket.receive_json()
             site_id = data["site-id"]
-            sites[site_id] = websocket
+            site_websockets[site_id] = websocket
             match data["type"]:
                 case "answer":
                     client = Address(host=data["client"][0], port=data["client"][1])
@@ -34,7 +49,7 @@ async def controller_websocket_endpoint(websocket: WebSocket):
                     logger.warning(f"got unknown ws type {data["type"]}")
     except WebSocketDisconnect:
         logger.info(f"controller {websocket.client} disconnected")
-        sites.pop(site_id)
+        site_websockets.pop(site_id)
 
 
 @app.get("/ice-servers")
@@ -80,7 +95,7 @@ async def client_websocket_endpoint(websocket: WebSocket):
                             site_id = "test-site"
                             assert websocket.client
                             clients[websocket.client] = websocket
-                            if site_id not in sites:
+                            if site_id not in site_websockets:
                                 await websocket.send_json(
                                     {"type": "error", "error": f"no site {site_id}"}
                                 )
@@ -88,7 +103,7 @@ async def client_websocket_endpoint(websocket: WebSocket):
                                 await websocket.send_json(
                                     {"type": "connected", "site-id": site_id}
                                 )
-                                await sites[site_id].send_json(
+                                await site_websockets[site_id].send_json(
                                     {
                                         "type": "command",
                                         "command": "connect",
@@ -100,11 +115,11 @@ async def client_websocket_endpoint(websocket: WebSocket):
                             logger.warning(f"got unknown command {data["command"]}")
                 case "offer":
                     data["client"] = websocket.client
-                    await sites[site_id].send_json(data)
+                    await site_websockets[site_id].send_json(data)
                     logger.info(f"forwarded offer to {site_id} from {websocket.client}")
                 case "ice-candidate":
                     data["client"] = websocket.client
-                    await sites[site_id].send_json(data)
+                    await site_websockets[site_id].send_json(data)
                     logger.info(
                         f"forwarded candidate to {site_id} from {websocket.client}"
                     )
