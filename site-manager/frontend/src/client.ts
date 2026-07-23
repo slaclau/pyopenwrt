@@ -104,7 +104,10 @@ export const site_manager_client = createClient(
     })
 )
 
-async function myInterceptor(response: Response) {
+async function myInterceptor(response: Response, request: Request) {
+    if (request.url.includes("/token"))
+        return response
+
     const status = response.status
 
     switch (status) {

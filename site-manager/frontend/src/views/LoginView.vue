@@ -15,15 +15,18 @@ const form = reactive({
 
 const handleLogin = async () => {
     if (form.username && form.password) {
-        let auth_token = (await loginForAccessTokenUsersTokenPost({ client: site_manager_client, body: { username: form.username, password: form.password } })).data
-        if (auth_token) {
-            localStorage.setItem('auth_token', auth_token.access_token)
-            console.log(auth_token)
+        let response = (await loginForAccessTokenUsersTokenPost({ client: site_manager_client, body: { username: form.username, password: form.password } }))
+        let token = response.data?.access_token;
+        if (!response.error && token) {
+            localStorage.setItem('auth_token', token)
+            console.log(token)
             ElMessage.success('Logged in')
 
             // Redirect back or to dashboard
             const target = (route.query.redirect as string) || '/'
             router.push(target)
+        } else {
+            ElMessage.error('Invalid credentials')
         }
     } else {
         ElMessage.error('Please fill in all fields')
