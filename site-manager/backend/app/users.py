@@ -147,7 +147,7 @@ class PermissionChecker:
         self.path_param_name = path_param_name
 
     def __call__(
-        self, request: Request, user: Annotated[User, Depends(get_current_user)]
+        self, request: Request, user: Annotated[User, Depends(get_current_active_user)]
     ):
         user_perms = user.permissions.split(" ")
 

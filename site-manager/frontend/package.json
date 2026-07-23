@@ -12,9 +12,11 @@
     "lint": "run-s \"lint:*\"",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
-    "format": "prettier --write --experimental-cli src/"
+    "format": "prettier --write --experimental-cli src/",
+    "openapi-ts": "openapi-ts -i http://localhost:8001/openapi.json -o src/sdk"
   },
   "dependencies": {
+    "@hey-api/openapi-ts": "^0.99.0",
     "@mdi/js": "^7.4.47",
     "@vueuse/core": "^14.3.0",
     "chart.js": "^4.5.1",

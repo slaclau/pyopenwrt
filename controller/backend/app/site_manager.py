@@ -1,7 +1,9 @@
 import asyncio
 import json
 import logging
+import os
 import time
+import uuid
 
 from fastapi import FastAPI
 import httpx
@@ -14,7 +16,13 @@ SITE_MANAGER_ICE_SERVERS_URI = (
     "http://localhost:8001/ice-servers"  # Target external endpoint
 )
 
-SITE_ID = "test-site"
+if not os.path.exists("SITE_ID"):
+    with open("SITE_ID", "w") as f:
+        f.write(str(uuid.uuid4()))
+
+
+with open("SITE_ID") as f:
+    SITE_ID = f.read()
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
 access_logger = logging.getLogger(f"uvicorn.access.{__name__}")
@@ -48,7 +56,8 @@ async def send_heartbeat(websocket: websockets.ClientConnection):
         message = json.dumps(
             {
                 "type": "heartbeat",
-                "site-id": SITE_ID,
+                "site_id": SITE_ID,
+                "name": "Test Site",
                 "time": time.time(),
             }
         )
