@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Status } from '@/sdk'
+import type { Status } from 'controller/sdk'
 import NetworksView from 'controller/views/NetworksView.vue'
 import WirelessView from 'controller/views/WirelessView.vue'
 

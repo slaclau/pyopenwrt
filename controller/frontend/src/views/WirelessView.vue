@@ -8,7 +8,6 @@ import WirelessDrawerComponent from 'controller/components/settings/wireless/Wir
 const networks: Ref<Array<Wireless> | undefined> = ref([])
 getAllWirelessNetworksConfigurationWirelessGet({ client }).then((res) => {
   networks.value = res.data
-  console.log(networks)
 })
 
 const selectedNetwork: Ref<Wireless | null> = ref(null)

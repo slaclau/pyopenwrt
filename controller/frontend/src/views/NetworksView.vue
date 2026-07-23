@@ -8,7 +8,6 @@ import NetworkDrawerComponent from 'controller/components/settings/networks/Netw
 const networks: Ref<Array<NetworkOutput> | undefined> = ref([])
 getAllNetworksConfigurationNetworksGet({ client }).then((res) => {
   networks.value = res.data
-  console.log(networks)
 })
 
 const selectedNetwork: Ref<NetworkOutput | null> = ref(null)
