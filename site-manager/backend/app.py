@@ -13,6 +13,9 @@ logger = logging.getLogger(f"uvicorn.{__name__}")
 sites: dict[str, WebSocket] = {}
 clients: dict[Address, WebSocket] = {}
 
+# TODO: #1 Add db backend
+# TODO: #3 Add users, potentially as oauth provider to controller
+
 
 @app.websocket("/controller/ws")
 async def controller_websocket_endpoint(websocket: WebSocket):

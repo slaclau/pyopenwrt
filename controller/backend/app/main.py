@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-
+# TODO: #2 Add users and RBAC
 
 register_log_filter()
 
