@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { onMounted, ref, type Ref } from 'vue';
-
 import { mdiArrowLeft, mdiThemeLightDark } from '@mdi/js';
 import { useDark, useToggle } from '@vueuse/core';
 
@@ -11,20 +9,26 @@ import router from './router';
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
 
-onMounted(() => {
-  console.log("mounted");
-})
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 </script>
 
 <template>
   <el-container>
     <el-header>
       <h1>
-        <span style="float: left"><el-button @click="router.back()"><svg-icon type="mdi" :path="mdiArrowLeft"
-              :size="24" /></el-button></span>
-        OpenWrt Site Manager
-        <span style="float: right"><el-button @click="toggleDark()"><svg-icon type="mdi" :path="mdiThemeLightDark"
-              :size="24" /></el-button></span>
+        <span style="float: left"><el-button :style="`visibility: ${['/', '/login'].includes(route.path) ? 'hidden'
+          : 'visible'}`" @click="router.back()">
+            <svg-icon type="mdi" :path="mdiArrowLeft" :size="24" />
+          </el-button>
+        </span>
+        <span class="header-title">Site Manager</span>
+        <span style="float: right">
+          <el-button @click="toggleDark()">
+            <svg-icon type="mdi" :path="mdiThemeLightDark" :size="24" />
+          </el-button>
+        </span>
       </h1>
     </el-header>
     <el-main>
@@ -33,4 +37,9 @@ onMounted(() => {
   </el-container>
 </template>
 
-<style scoped></style>
+<style scoped>
+.header-title {
+  margin-left: 16px;
+  /* Creates the gap between left button and title */
+}
+</style>

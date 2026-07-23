@@ -10,15 +10,10 @@ const sites: Ref<Site[]> = ref([])
 let timer: number;
 
 onMounted(() => {
-    console.log("mounted");
-
-
-
     timer = setIntervalImmediate(() => {
         getAllMySitesSitesGet({ client: site_manager_client }).then((res) => {
             if (res.data)
                 sites.value = res.data;
-            console.log("sites", sites.value)
         })
     }, 3000)
 })
