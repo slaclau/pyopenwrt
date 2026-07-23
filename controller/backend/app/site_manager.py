@@ -9,7 +9,7 @@ import httpx
 import aiortc
 import websockets
 
-SITE_MANAGER_WS_URI = "ws://localhost:8001/controller/ws"  # Target external endpoint
+SITE_MANAGER_WS_URI = "ws://localhost:8001/sites/ws"  # Target external endpoint
 SITE_MANAGER_ICE_SERVERS_URI = (
     "http://localhost:8001/ice-servers"  # Target external endpoint
 )
