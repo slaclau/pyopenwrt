@@ -24,13 +24,13 @@
     "chartjs-plugin-datalabels": "^2.2.0",
     "element-plus": "^2.14.3",
     "mui": "^0.0.1",
-    "simple-icons": "^15.16.0",
+    "simple-icons": "^15.22.0",
     "vue": "^3.5.18",
     "vue-chartjs": "^5.3.4",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "0.99.0",
+    "@hey-api/openapi-ts": "^0.97.0",
     "@tsconfig/node22": "^22.0.2",
     "@types/node": "^22.16.5",
     "@vitejs/plugin-vue": "^6.0.1",
