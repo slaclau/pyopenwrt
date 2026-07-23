@@ -13,7 +13,8 @@ export function makeIcon(roles: Array<DeviceRole> | undefined) {
   return mdiLan
 }
 
-export function formatTime(seconds: number) {
+export function formatTime(seconds: number | null) {
+  if (!seconds) return ""
   const days = Math.floor(seconds / (3600 * 24))
   const hours = Math.floor((seconds - 3600 * 24 * days) / 3600)
   const minutes = Math.floor((seconds - 3600 * 24 * days - 3600 * hours) / 60)
