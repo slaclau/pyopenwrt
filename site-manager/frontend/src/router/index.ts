@@ -14,7 +14,13 @@ const router = createRouter({
             path: '/',
             name: 'Dashboard',
             component: () => import('@/views/DashboardView.vue'),
-            meta: { requiresAuth: true } // 🔒 Protected route flag
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/sites/:site_id',
+            name: 'Site',
+            component: () => import('@/views/SiteView.vue'),
+            meta: { requiresAuth: true }
         }
     ]
 })

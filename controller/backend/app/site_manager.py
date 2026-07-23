@@ -188,7 +188,7 @@ async def listen(websocket: websockets.ClientConnection, app: FastAPI):
                     json.dumps(
                         {
                             "type": "answer",
-                            "site-id": SITE_ID,
+                            "site_id": SITE_ID,
                             "client": tuple(message["client"]),
                             "answer": connections[
                                 tuple(message["client"])

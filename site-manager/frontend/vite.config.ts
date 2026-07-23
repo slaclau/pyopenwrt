@@ -23,10 +23,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),
+        ws: true,
       },
     },
     host: true,
     allowedHosts: ["sl-xps15-fedora"],
-    port: 5174
+    port: 5174,
   }
 })

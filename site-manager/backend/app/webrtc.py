@@ -51,7 +51,7 @@ async def client_websocket_endpoint(websocket: WebSocket):
                 case "command":
                     match data["command"]:
                         case "connect":
-                            site_id = "test-site"
+                            site_id = data["site_id"]
                             assert websocket.client
                             client_websockets[websocket.client] = websocket
                             if site_id not in site_websockets:
