@@ -189,6 +189,7 @@ async def listen(websocket: websockets.ClientConnection, app: FastAPI):
                 )
 
                 logger.info(f"Sent WebRTC answer")
+
             case "ice-candidate":
                 candidate = message["ice-candidate"]
                 if not (candidate and len(candidate["candidate"].split(" ")) > 7):

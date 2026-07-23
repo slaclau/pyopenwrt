@@ -2,17 +2,14 @@
 import { onMounted, ref, type Ref } from 'vue';
 
 import Controller from 'controller/App.vue'
-import { client, dataChannel, handleResponse } from './client.ts';
-import { getStatusStatusGet } from 'controller/sdk/sdk.gen.ts';
+import { dataChannel, handleResponse } from './client.ts';
 import type { Status } from 'controller/sdk/types.gen.ts';
 
 const status: Ref<string | Status> = ref("Waiting for status");
 const connected: Ref<boolean> = ref(false)
 
-onMounted(() => {
-  console.log("mounted");
-
-  let socket = new WebSocket('ws://100.64.0.7:8001/ws') // Replace with your WebSocket URL
+function connect(url: string) {
+  let socket = new WebSocket(url) // Replace with your WebSocket URL
   let peerConnection: RTCPeerConnection;
   const configuration = {
     iceServers: [
@@ -91,6 +88,11 @@ onMounted(() => {
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
         break;
 
+      case "error":
+        console.error(data)
+        connect(url);
+        break;
+
       default:
         console.warn("unknown ws message type", data.type)
     }
@@ -98,7 +100,14 @@ onMounted(() => {
 
   socket.onclose = () => {
     console.warn("ws closed");
+    connect(url);
   }
+}
+
+onMounted(() => {
+  console.log("mounted");
+
+  connect('ws://100.64.0.7:8001/ws')
 })
 </script>
 
